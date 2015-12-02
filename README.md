@@ -1,4 +1,4 @@
-#StockAdapterView 
+#StockAdapterView(developing)
 
 Base on android 2.3.7 source code
 
