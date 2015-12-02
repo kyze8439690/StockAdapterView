@@ -40,8 +40,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
     static final int TOUCH_MODE_DONE_WAITING = 2;
     static final int TOUCH_MODE_SCROLL = 3;
     static final int TOUCH_MODE_FLING = 4;
-    static final int TOUCH_MODE_OVERSCROLL = 5;
-    static final int TOUCH_MODE_OVERFLING = 6;
 
     int mTouchMode = TOUCH_MODE_REST;
 
@@ -112,10 +110,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
 
     private ContextMenu.ContextMenuInfo mContextMenuInfo = null;
 
-    int mOverscrollMax;
-
-    static final int OVERSCROLL_LIMIT_DIVISOR = 3;
-
     private static final int TOUCH_MODE_UNKNOWN = -1;
     private static final int TOUCH_MODE_ON = 0;
     private static final int TOUCH_MODE_OFF = 1;
@@ -148,15 +142,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
 
     private static final int INVALID_POINTER = -1;
 
-    int mOverscrollDistance;
-
-    int mOverflingDistance;
-
     private int mFirstPositionDistanceGuess;
 
     private int mLastPositionDistanceGuess;
-
-    private int mDirection = 0;
 
     private boolean mClipToPadding;
     private boolean mDisallowIntercept;
@@ -235,8 +223,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
         mTouchSlop = configuration.getScaledTouchSlop();
         mMinimumVelocity = configuration.getScaledMinimumFlingVelocity();
         mMaximumVelocity = configuration.getScaledMaximumFlingVelocity();
-        mOverscrollDistance = configuration.getScaledOverscrollDistance();
-        mOverflingDistance = configuration.getScaledOverflingDistance();
     }
 
     @Override
@@ -626,8 +612,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
 
         layoutChildren();
         mInLayout = false;
-
-        mOverscrollMax = (b - t) / OVERSCROLL_LIMIT_DIVISOR;
     }
 
     protected void layoutChildren() {
@@ -1195,10 +1179,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
         // Check if we have moved far enough that it looks more like a
         // scroll than a tap
         final int distance = Math.abs(deltaY);
-        final boolean overscroll = getScrollY() != 0;
-        if (overscroll || distance > mTouchSlop) {
+        if (distance > mTouchSlop) {
             createScrollingCache();
-            mTouchMode = overscroll ? TOUCH_MODE_OVERSCROLL : TOUCH_MODE_SCROLL;
+            mTouchMode = TOUCH_MODE_SCROLL;
             mMotionCorrection = deltaY;
             final Handler handler = getHandler();
             // Handler should not be null unless the AbsListView is not attached to a
@@ -1234,18 +1217,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                 // touch mode). Force an initial layout to get rid of the selection.
                 layoutChildren();
             }
-        } else {
-            int touchMode = mTouchMode;
-            if (touchMode == TOUCH_MODE_OVERSCROLL || touchMode == TOUCH_MODE_OVERFLING) {
-                if (mFlingRunnable != null) {
-                    mFlingRunnable.endFling();
-                }
-
-                if (getScrollY() != 0) {
-                    setScrollY(0);
-                    invalidate();
-                }
-            }
         }
     }
 
@@ -1275,62 +1246,48 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
 
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
-                switch (mTouchMode) {
-                    case TOUCH_MODE_OVERFLING: {
-                        mFlingRunnable.endFling();
-                        mTouchMode = TOUCH_MODE_OVERSCROLL;
-                        mMotionY = mLastY = (int) ev.getY();
-                        mMotionCorrection = 0;
-                        mActivePointerId = ev.getPointerId(0);
-                        break;
-                    }
-
-                    default: {
-                        mActivePointerId = ev.getPointerId(0);
-                        final int x = (int) ev.getX();
-                        final int y = (int) ev.getY();
-                        int motionPosition = pointToPosition(x, y);
-                        if (!mDataChanged) {
-                            if ((mTouchMode != TOUCH_MODE_FLING) && (motionPosition >= 0)
-                                    && (getAdapter().isEnabled(motionPosition))) {
-                                // User clicked on an actual view (and was not stopping a fling). It might be a
-                                // click or a scroll. Assume it is a click until proven otherwise
-                                mTouchMode = TOUCH_MODE_DOWN;
-                                if (mPendingCheckForTap == null) {
-                                    mPendingCheckForTap = new CheckForTap();
-                                }
-                                postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
-                            } else {
-                                if (ev.getEdgeFlags() != 0 && motionPosition < 0) {
-                                    // If we couldn't find a view to click on, but the down event was touching
-                                    // the edge, we will bail out and try again. This allows the edge correcting
-                                    // code in ViewRoot to try to find a nearby view to select
-                                    return false;
-                                }
-
-                                if (mTouchMode == TOUCH_MODE_FLING) {
-                                    // Stopped a fling. It is a scroll.
-                                    createScrollingCache();
-                                    mTouchMode = TOUCH_MODE_SCROLL;
-                                    mMotionCorrection = 0;
-                                    motionPosition = findMotionRow(y);
-                                    reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
-                                }
-                            }
+                mActivePointerId = ev.getPointerId(0);
+                final int x = (int) ev.getX();
+                final int y = (int) ev.getY();
+                int motionPosition = pointToPosition(x, y);
+                if (!mDataChanged) {
+                    if ((mTouchMode != TOUCH_MODE_FLING) && (motionPosition >= 0)
+                            && (getAdapter().isEnabled(motionPosition))) {
+                        // User clicked on an actual view (and was not stopping a fling). It might be a
+                        // click or a scroll. Assume it is a click until proven otherwise
+                        mTouchMode = TOUCH_MODE_DOWN;
+                        if (mPendingCheckForTap == null) {
+                            mPendingCheckForTap = new CheckForTap();
+                        }
+                        postDelayed(mPendingCheckForTap, ViewConfiguration.getTapTimeout());
+                    } else {
+                        if (ev.getEdgeFlags() != 0 && motionPosition < 0) {
+                            // If we couldn't find a view to click on, but the down event was touching
+                            // the edge, we will bail out and try again. This allows the edge correcting
+                            // code in ViewRoot to try to find a nearby view to select
+                            return false;
                         }
 
-                        if (motionPosition >= 0) {
-                            // Remember where the motion event started
-                            v = getChildAt(motionPosition - mFirstPosition);
-                            mMotionViewOriginalTop = v.getTop();
+                        if (mTouchMode == TOUCH_MODE_FLING) {
+                            // Stopped a fling. It is a scroll.
+                            createScrollingCache();
+                            mTouchMode = TOUCH_MODE_SCROLL;
+                            mMotionCorrection = 0;
+                            motionPosition = findMotionRow(y);
+                            reportScrollStateChange(OnScrollListener.SCROLL_STATE_TOUCH_SCROLL);
                         }
-                        mMotionX = x;
-                        mMotionY = y;
-                        mMotionPosition = motionPosition;
-                        mLastY = Integer.MIN_VALUE;
-                        break;
                     }
                 }
+
+                if (motionPosition >= 0) {
+                    // Remember where the motion event started
+                    v = getChildAt(motionPosition - mFirstPosition);
+                    mMotionViewOriginalTop = v.getTop();
+                }
+                mMotionX = x;
+                mMotionY = y;
+                mMotionPosition = motionPosition;
+                mLastY = Integer.MIN_VALUE;
                 break;
             }
 
@@ -1370,99 +1327,19 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                             }
 
                             int motionViewPrevTop = 0;
-                            View motionView = this.getChildAt(motionIndex);
-                            if (motionView != null) {
-                                motionViewPrevTop = motionView.getTop();
-                            }
+                            View motionView;
 
-                            // No need to do all this work if we're not going to move anyway
-                            boolean atEdge = false;
                             if (incrementalDeltaY != 0) {
-                                atEdge = trackMotionScroll(deltaY, incrementalDeltaY);
+                                trackMotionScroll(deltaY, incrementalDeltaY);
                             }
 
                             // Check to see if we have bumped into the scroll limit
                             motionView = this.getChildAt(motionIndex);
                             if (motionView != null) {
-                                // Check if the top of the motion view is where it is
-                                // supposed to be
-                                final int motionViewRealTop = motionView.getTop();
-                                if (atEdge) {
-                                    // Apply overscroll
-
-                                    int overscroll = -incrementalDeltaY -
-                                            (motionViewRealTop - motionViewPrevTop);
-                                    overScrollBy(0, overscroll, 0, getScrollY(), 0, 0,
-                                            0, mOverscrollDistance, true);
-                                    if (Math.abs(mOverscrollDistance) == Math.abs(getScrollY())) {
-                                        // Don't allow overfling if we're at the edge.
-                                        mVelocityTracker.clear();
-                                    }
-
-                                    final int overscrollMode = getOverScrollMode();
-                                    if (overscrollMode == OVER_SCROLL_ALWAYS ||
-                                            (overscrollMode == OVER_SCROLL_IF_CONTENT_SCROLLS &&
-                                                    !contentFits())) {
-                                        mDirection = 0; // Reset when entering overscroll.
-                                        mTouchMode = TOUCH_MODE_OVERSCROLL;
-                                    }
-                                }
                                 mMotionY = y;
                                 invalidate();
                             }
                             mLastY = y;
-                        }
-                        break;
-
-                    case TOUCH_MODE_OVERSCROLL:
-                        if (y != mLastY) {
-                            final int rawDeltaY = deltaY;
-                            deltaY -= mMotionCorrection;
-                            int incrementalDeltaY = mLastY != Integer.MIN_VALUE ? y - mLastY : deltaY;
-
-                            final int oldScroll = getScrollY();
-                            final int newScroll = oldScroll - incrementalDeltaY;
-                            int newDirection = y > mLastY ? 1 : -1;
-
-                            if (mDirection == 0) {
-                                mDirection = newDirection;
-                            }
-
-                            if (mDirection != newDirection) {
-                                // Coming back to 'real' list scrolling
-                                incrementalDeltaY = -newScroll;
-                                setScrollY(0);
-
-                                // No need to do all this work if we're not going to move anyway
-                                if (incrementalDeltaY != 0) {
-                                    trackMotionScroll(incrementalDeltaY, incrementalDeltaY);
-                                }
-
-                                // Check to see if we are back in
-                                View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
-                                if (motionView != null) {
-                                    mTouchMode = TOUCH_MODE_SCROLL;
-
-                                    // We did not scroll the full amount. Treat this essentially like the
-                                    // start of a new touch scroll
-                                    final int motionPosition = findClosestMotionRow(y);
-
-                                    mMotionCorrection = 0;
-                                    motionView = getChildAt(motionPosition - mFirstPosition);
-                                    mMotionViewOriginalTop = motionView.getTop();
-                                    mMotionY = y;
-                                    mMotionPosition = motionPosition;
-                                }
-                            } else {
-                                overScrollBy(0, -incrementalDeltaY, 0, getScrollY(), 0, 0,
-                                        0, mOverscrollDistance, true);
-                                if (Math.abs(mOverscrollDistance) == Math.abs(getScrollY())) {
-                                    // Don't allow overfling if we're at the edge.
-                                    mVelocityTracker.clear();
-                                }
-                            }
-                            mLastY = y;
-                            mDirection = newDirection;
                         }
                         break;
                 }
@@ -1556,9 +1433,9 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                                 // fling further.
                                 if (Math.abs(initialVelocity) > mMinimumVelocity &&
                                         !((mFirstPosition == 0 &&
-                                                firstChildTop == contentTop - mOverscrollDistance) ||
+                                                firstChildTop == contentTop) ||
                                                 (mFirstPosition + childCount == mItemCount &&
-                                                        lastChildBottom == contentBottom + mOverscrollDistance))) {
+                                                        lastChildBottom == contentBottom))) {
                                     if (mFlingRunnable == null) {
                                         mFlingRunnable = new FlingRunnable();
                                     }
@@ -1574,23 +1451,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                             mTouchMode = TOUCH_MODE_REST;
                             reportScrollStateChange(OnScrollListener.SCROLL_STATE_IDLE);
                         }
-                        break;
-
-                    case TOUCH_MODE_OVERSCROLL:
-                        if (mFlingRunnable == null) {
-                            mFlingRunnable = new FlingRunnable();
-                        }
-                        final VelocityTracker velocityTracker = mVelocityTracker;
-                        velocityTracker.computeCurrentVelocity(1000, mMaximumVelocity);
-                        final int initialVelocity = (int) velocityTracker.getYVelocity(mActivePointerId);
-
-                        reportScrollStateChange(OnScrollListener.SCROLL_STATE_FLING);
-                        if (Math.abs(initialVelocity) > mMinimumVelocity) {
-                            mFlingRunnable.startOverfling(-initialVelocity);
-                        } else {
-                            mFlingRunnable.startSpringback();
-                        }
-
                         break;
                 }
 
@@ -1614,36 +1474,22 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
             }
 
             case MotionEvent.ACTION_CANCEL: {
-                switch (mTouchMode) {
-                    case TOUCH_MODE_OVERSCROLL:
-                        if (mFlingRunnable == null) {
-                            mFlingRunnable = new FlingRunnable();
-                        }
-                        mFlingRunnable.startSpringback();
-                        break;
+                mTouchMode = TOUCH_MODE_REST;
+                setPressed(false);
+                View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
+                if (motionView != null) {
+                    motionView.setPressed(false);
+                }
+                clearScrollingCache();
 
-                    case TOUCH_MODE_OVERFLING:
-                        // Do nothing - let it play out.
-                        break;
+                final Handler handler = getHandler();
+                if (handler != null) {
+                    handler.removeCallbacks(mPendingCheckForLongPress);
+                }
 
-                    default:
-                        mTouchMode = TOUCH_MODE_REST;
-                        setPressed(false);
-                        View motionView = this.getChildAt(mMotionPosition - mFirstPosition);
-                        if (motionView != null) {
-                            motionView.setPressed(false);
-                        }
-                        clearScrollingCache();
-
-                        final Handler handler = getHandler();
-                        if (handler != null) {
-                            handler.removeCallbacks(mPendingCheckForLongPress);
-                        }
-
-                        if (mVelocityTracker != null) {
-                            mVelocityTracker.recycle();
-                            mVelocityTracker = null;
-                        }
+                if (mVelocityTracker != null) {
+                    mVelocityTracker.recycle();
+                    mVelocityTracker = null;
                 }
                 mActivePointerId = INVALID_POINTER;
                 break;
@@ -1690,10 +1536,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
         switch (action & MotionEvent.ACTION_MASK) {
             case MotionEvent.ACTION_DOWN: {
                 int touchMode = mTouchMode;
-                if (touchMode == TOUCH_MODE_OVERFLING || touchMode == TOUCH_MODE_OVERSCROLL) {
-                    mMotionCorrection = 0;
-                    return true;
-                }
 
                 final int x = (int) ev.getX();
                 final int y = (int) ev.getY();
@@ -1821,22 +1663,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
         }
 
         void startSpringback() {
-            if (mScroller.springBack(0, getScrollY(), 0, 0, 0, 0)) {
-                mTouchMode = TOUCH_MODE_OVERFLING;
-                invalidate();
-                post(this);
-            } else {
-                mTouchMode = TOUCH_MODE_REST;
-            }
-        }
-
-        void startOverfling(int initialVelocity) {
-            final int min = getScrollY() > 0 ? Integer.MIN_VALUE : 0;
-            final int max = getScrollY() > 0 ? 0 : Integer.MAX_VALUE;
-            mScroller.fling(0, getScrollY(), 0, initialVelocity, 0, 0, min, max, 0, getHeight());
-            mTouchMode = TOUCH_MODE_OVERFLING;
-            invalidate();
-            post(this);
+            mTouchMode = TOUCH_MODE_REST;
         }
 
         void startScroll(int distance, int duration) {
@@ -1913,7 +1740,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                             // Tweak the scroll for how far we overshot
                             int overshoot = -(delta - (motionView.getTop() - oldTop));
                             overScrollBy(0, overshoot, 0, getScrollY(), 0, 0,
-                                    0, mOverflingDistance, false);
+                                    0, 0, false);
                         }
                         break;
                     }
@@ -1922,24 +1749,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                         invalidate();
                         mLastFlingY = y;
                         post(this);
-                    } else {
-                        endFling();
-                    }
-                    break;
-                }
-
-                case TOUCH_MODE_OVERFLING: {
-                    final OverScroller scroller = mScroller;
-                    if (scroller.computeScrollOffset()) {
-                        final int scrollY = getScrollY();
-                        final int deltaY = scroller.getCurrY() - scrollY;
-                        if (overScrollBy(0, deltaY, 0, scrollY, 0, 0,
-                                0, mOverflingDistance, false)) {
-                            startSpringback();
-                        } else {
-                            invalidate();
-                            post(this);
-                        }
                     } else {
                         endFling();
                     }

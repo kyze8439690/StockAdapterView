@@ -2931,9 +2931,11 @@ public class ListView extends AbsListView {
         public void writeToParcel(Parcel out, int flags) {
             super.writeToParcel(out, flags);
             out.writeSparseBooleanArray(checkState);
-            long[] keys = new long[checkIdState.size()];
-            for (int i = 0; i < keys.length; i++) {
-                keys[i] = checkIdState.keyAt(i);
+            long[] keys = new long[checkIdState != null ? checkIdState.size() : 0];
+            if (checkIdState != null) {
+                for (int i = 0; i < keys.length; i++) {
+                    keys[i] = checkIdState.keyAt(i);
+                }
             }
             out.writeLongArray(checkIdState != null ? keys : new long[0]);
         }
