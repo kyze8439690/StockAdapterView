@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="AbsListViewStyle" parent="android:Widget.AbsListView">
+
+    </style>
+
+    <style name="ListViewStyle" parent="android:Widget.ListView.White">
+
+    </style>
+
+    <style name="GridViewStyle" parent="android:Widget.GridView">
+
+    </style>
+</resources>

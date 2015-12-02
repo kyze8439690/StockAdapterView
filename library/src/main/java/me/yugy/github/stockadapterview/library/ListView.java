@@ -72,55 +72,45 @@ public class ListView extends AbsListView {
 
     private FocusSelector mFocusSelector;
 
-    private static final int[] ATTRIBUTES_SET = new int[] {
-            android.R.attr.divider,
-            android.R.attr.overScrollHeader,
-            android.R.attr.overScrollFooter,
-            android.R.attr.dividerHeight,
-            android.R.attr.choiceMode,
-            android.R.attr.headerDividersEnabled,
-            android.R.attr.footerDividersEnabled
-    };
-
     public ListView(Context context) {
         this(context, null);
     }
 
     public ListView(Context context, AttributeSet attrs) {
-        this(context, attrs, android.R.attr.listViewStyle);
+        this(context, attrs, R.attr.listViewStyle);
     }
 
     public ListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, ATTRIBUTES_SET);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.ListView, defStyle, 0);
 
-        final Drawable d = a.getDrawable(0);
+        final Drawable d = a.getDrawable(R.styleable.ListView_android_divider);
         if (d != null) {
             // If a divider is specified use its intrinsic height for divider height
             setDivider(d);
         }
 
-        final Drawable osHeader = a.getDrawable(1);
+        final Drawable osHeader = a.getDrawable(R.styleable.ListView_android_overScrollHeader);
         if (osHeader != null) {
             setOverscrollHeader(osHeader);
         }
 
-        final Drawable osFooter = a.getDrawable(2);
+        final Drawable osFooter = a.getDrawable(R.styleable.ListView_android_overScrollFooter);
         if (osFooter != null) {
             setOverscrollFooter(osFooter);
         }
 
         // Use the height specified, zero being the default
-        final int dividerHeight = a.getDimensionPixelSize(3, 0);
+        final int dividerHeight = a.getDimensionPixelSize(R.styleable.ListView_android_dividerHeight, 0);
         if (dividerHeight != 0) {
             setDividerHeight(dividerHeight);
         }
 
-        setChoiceMode(a.getInt(4, CHOICE_MODE_NONE));
+        setChoiceMode(a.getInt(R.styleable.ListView_android_choiceMode, CHOICE_MODE_NONE));
 
-        mHeaderDividersEnabled = a.getBoolean(5, true);
-        mFooterDividersEnabled = a.getBoolean(6, true);
+        mHeaderDividersEnabled = a.getBoolean(R.styleable.ListView_android_headerDividersEnabled, true);
+        mFooterDividersEnabled = a.getBoolean(R.styleable.ListView_android_footerDividersEnabled, true);
 
         a.recycle();
     }

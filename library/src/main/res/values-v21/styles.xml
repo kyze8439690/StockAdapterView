@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="ListViewStyle" parent="android:Widget.Material.ListView">
+
+    </style>
+
+    <style name="GridViewStyle" parent="android:Widget.Material.GridView">
+
+    </style>
+</resources>

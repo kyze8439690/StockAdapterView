@@ -160,16 +160,6 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                       int totalItemCount);
     }
 
-    private static final int[] ATTRIBUTES_SET = new int[] {
-            android.R.attr.listSelector,
-            android.R.attr.drawSelectorOnTop,
-            android.R.attr.stackFromBottom,
-            android.R.attr.scrollingCache,
-            android.R.attr.transcriptMode,
-            android.R.attr.cacheColorHint,
-            android.R.attr.smoothScrollbar
-    };
-
     public AbsListView(Context context) {
         super(context);
         initAbsListView();
@@ -177,35 +167,35 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
     }
 
     public AbsListView(Context context, AttributeSet attrs) {
-        this(context, attrs, android.R.attr.absListViewStyle);
+        this(context, attrs, R.attr.absListViewStyle);
     }
 
     public AbsListView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initAbsListView();
 
-        TypedArray a = context.obtainStyledAttributes(attrs, ATTRIBUTES_SET);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.AbsListView, defStyle, 0);
 
-        Drawable d = a.getDrawable(0);
+        Drawable d = a.getDrawable(R.styleable.AbsListView_android_listSelector);
         if (d != null) {
             setSelector(d);
         }
 
-        mDrawSelectorOnTop = a.getBoolean(1, false);
+        mDrawSelectorOnTop = a.getBoolean(R.styleable.AbsListView_android_drawSelectorOnTop, false);
 
-        boolean stackFromBottom = a.getBoolean(2, false);
+        boolean stackFromBottom = a.getBoolean(R.styleable.AbsListView_android_stackFromBottom, false);
         setStackFromBottom(stackFromBottom);
 
-        boolean scrollingCacheEnabled = a.getBoolean(3, true);
+        boolean scrollingCacheEnabled = a.getBoolean(R.styleable.AbsListView_android_scrollingCache, true);
         setScrollingCacheEnabled(scrollingCacheEnabled);
 
-        int transcriptMode = a.getInt(4, TRANSCRIPT_MODE_DISABLED);
+        int transcriptMode = a.getInt(R.styleable.AbsListView_android_transcriptMode, TRANSCRIPT_MODE_DISABLED);
         setTranscriptMode(transcriptMode);
 
-        int color = a.getColor(5, 0);
+        int color = a.getColor(R.styleable.AbsListView_android_cacheColorHint, 0);
         setCacheColorHint(color);
 
-        boolean smoothScrollbar = a.getBoolean(6, true);
+        boolean smoothScrollbar = a.getBoolean(R.styleable.AbsListView_android_smoothScrollbar, true);
         setSmoothScrollbarEnabled(smoothScrollbar);
 
         a.recycle();
