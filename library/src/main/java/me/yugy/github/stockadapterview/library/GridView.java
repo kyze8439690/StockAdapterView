@@ -1028,11 +1028,11 @@ public class GridView extends AbsListView {
             recycleBin.scrapActiveViews();
 
             if (sel != null) {
-                positionSelector(sel);
+                positionSelector(INVALID_POSITION, sel);
                 mSelectedTop = sel.getTop();
             } else if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_SCROLL) {
                 View child = getChildAt(mMotionPosition - mFirstPosition);
-                if (child != null) positionSelector(child);
+                if (child != null) positionSelector(mMotionPosition, child);
             } else {
                 mSelectedTop = 0;
                 mSelectorRect.setEmpty();

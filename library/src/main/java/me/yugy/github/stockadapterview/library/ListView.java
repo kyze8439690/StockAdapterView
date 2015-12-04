@@ -429,7 +429,7 @@ public class ListView extends AbsListView {
         final boolean scroll = scrollYDelta != 0;
         if (scroll) {
             scrollListItemsBy(-scrollYDelta);
-            positionSelector(child);
+            positionSelector(INVALID_POSITION, child);
             mSelectedTop = child.getTop();
             invalidate();
         }
@@ -1283,19 +1283,19 @@ public class ListView extends AbsListView {
                         if (focused != null) {
                             focused.clearFocus();
                         }
-                        positionSelector(sel);
+                        positionSelector(INVALID_POSITION, sel);
                     } else {
                         sel.setSelected(false);
                         mSelectorRect.setEmpty();
                     }
                 } else {
-                    positionSelector(sel);
+                    positionSelector(INVALID_POSITION, sel);
                 }
                 mSelectedTop = sel.getTop();
             } else {
                 if (mTouchMode > TOUCH_MODE_DOWN && mTouchMode < TOUCH_MODE_SCROLL) {
                     View child = getChildAt(mMotionPosition - mFirstPosition);
-                    if (child != null) positionSelector(child);
+                    if (child != null) positionSelector(mMotionPosition, child);
                 } else {
                     mSelectedTop = 0;
                     mSelectorRect.setEmpty();
@@ -1811,6 +1811,7 @@ public class ListView extends AbsListView {
         }
 
         View selectedView = getSelectedView();
+        int selectedPos = mSelectedPosition;
 
         int nextSelectedPosition = lookForSelectablePositionOnScreen(direction);
         int amountToScroll = amountToScroll(direction, nextSelectedPosition);
@@ -1828,6 +1829,7 @@ public class ListView extends AbsListView {
             setSelectedPositionInt(nextSelectedPosition);
             setNextSelectedPositionInt(nextSelectedPosition);
             selectedView = getSelectedView();
+            selectedPos = nextSelectedPosition;
             if (mItemsCanFocus && focusResult == null) {
                 // there was no new view found to take focus, make sure we
                 // don't leave focus with the old selection
@@ -1868,7 +1870,7 @@ public class ListView extends AbsListView {
 
         if (needToRedraw) {
             if (selectedView != null) {
-                positionSelector(selectedView);
+                positionSelector(selectedPos, selectedView);
                 mSelectedTop = selectedView.getTop();
             }
             if (!awakenScrollBars()) {

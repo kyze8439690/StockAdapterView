@@ -1,5 +1,6 @@
 package me.yugy.github.stockadapterview.library;
 
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -45,5 +46,15 @@ public class ViewUtils {
             final View child = viewGroup.getChildAt(i);
             child.offsetLeftAndRight(offset);
         }
+    }
+
+    public static float getVerticalScrollFactor(View view) {
+            TypedValue outValue = new TypedValue();
+            if (!view.getContext().getTheme().resolveAttribute(
+                    android.R.attr.listPreferredItemHeight, outValue, true)) {
+                throw new IllegalStateException(
+                        "Expected theme to define listPreferredItemHeight.");
+            }
+            return outValue.getDimension(view.getResources().getDisplayMetrics());
     }
 }

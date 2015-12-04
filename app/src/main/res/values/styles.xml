@@ -10,6 +10,8 @@
         <item name="absListViewStyle">@style/AbsListViewStyle</item>
         <item name="listViewStyle">@style/ListViewStyle</item>
         <item name="gridViewStyle">@style/GridViewStyle</item>
+
+        <item name="android:listViewStyle">@style/ListViewStyle</item>
     </style>
 
 </resources>
