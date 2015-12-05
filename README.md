@@ -13,5 +13,4 @@ Base on android 2.3.7 source code
 
 - ListView entries
 - AbsListView text filter
-- AbsListView overscroll hint
 - AbsListView accessibility
