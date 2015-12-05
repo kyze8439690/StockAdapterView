@@ -768,11 +768,11 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
     }
 
     boolean shouldShowSelector() {
-        return (hasFocus() && !isInTouchMode()) || touchModeDrawsInPressedState();
+        return (isFocused() && !isInTouchMode()) || (touchModeDrawsInPressedState() && isPressed());
     }
 
     private void drawSelector(Canvas canvas) {
-        if (shouldShowSelector() && mSelectorRect != null && !mSelectorRect.isEmpty()) {
+        if (mSelectorRect != null && !mSelectorRect.isEmpty()) {
             final Drawable selector = mSelector;
             selector.setBounds(mSelectorRect);
             selector.draw(canvas);
