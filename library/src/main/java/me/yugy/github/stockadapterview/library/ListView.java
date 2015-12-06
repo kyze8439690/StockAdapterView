@@ -857,7 +857,9 @@ public class ListView extends AbsListView {
                 mListPadding.left + mListPadding.right, p.width);
         int lpHeight = p.height;
         int childHeightSpec;
-        if (lpHeight > 0) {
+        if (child.getVisibility() == GONE) {
+            childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.EXACTLY);
+        } else if (lpHeight > 0) {
             childHeightSpec = View.MeasureSpec.makeMeasureSpec(lpHeight, View.MeasureSpec.EXACTLY);
         } else {
             childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -1424,7 +1426,9 @@ public class ListView extends AbsListView {
                     mListPadding.left + mListPadding.right, p.width);
             int lpHeight = p.height;
             int childHeightSpec;
-            if (lpHeight > 0) {
+            if (child.getVisibility() == GONE) {
+                childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.EXACTLY);
+            } else if (lpHeight > 0) {
                 childHeightSpec = View.MeasureSpec.makeMeasureSpec(lpHeight, View.MeasureSpec.EXACTLY);
             } else {
                 childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
@@ -1954,7 +1958,9 @@ public class ListView extends AbsListView {
                 mListPadding.left + mListPadding.right, p.width);
         int lpHeight = p.height;
         int childHeightSpec;
-        if (lpHeight > 0) {
+        if (child.getVisibility() == GONE) {
+            childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.EXACTLY);
+        } else if (lpHeight > 0) {
             childHeightSpec = View.MeasureSpec.makeMeasureSpec(lpHeight, View.MeasureSpec.EXACTLY);
         } else {
             childHeightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
