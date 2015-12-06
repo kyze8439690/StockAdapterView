@@ -381,8 +381,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                     + " height=" + height + "}";
         }
 
-        public static final Creator<SavedState> CREATOR
-                = new Creator<SavedState>() {
+        public static final Parcelable.Creator<SavedState> CREATOR
+                = new Parcelable.Creator<SavedState>() {
             public SavedState createFromParcel(Parcel in) {
                 return new SavedState(in);
             }
@@ -1276,7 +1276,7 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
         // scroll than a tap
         final int distance = Math.abs(deltaY);
         final boolean overscroll = getScrollY() != 0;
-        if (distance > mTouchSlop) {
+        if (overscroll || distance > mTouchSlop) {
             createScrollingCache();
             mTouchMode = overscroll ? TOUCH_MODE_OVERSCROLL : TOUCH_MODE_SCROLL;
             mMotionCorrection = deltaY;
@@ -1818,8 +1818,8 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                 final int restoreCount = canvas.save();
                 final int width = getWidth();
 
-                canvas.translate(-width / 2, Math.min(0, scrollY + mFirstPositionDistanceGuess));
-                mEdgeGlowTop.setSize(width * 2, getHeight());
+                canvas.translate(0, Math.min(0, scrollY + mFirstPositionDistanceGuess));
+                mEdgeGlowTop.setSize(width, getHeight());
                 if (mEdgeGlowTop.draw(canvas)) {
                     invalidate();
                 }
@@ -1830,10 +1830,10 @@ public abstract class AbsListView extends AdapterView<ListAdapter>
                 final int width = getWidth();
                 final int height = getHeight();
 
-                canvas.translate(-width / 2,
+                canvas.translate(-width,
                         Math.max(height, scrollY + mLastPositionDistanceGuess));
                 canvas.rotate(180, width, 0);
-                mEdgeGlowBottom.setSize(width * 2, height);
+                mEdgeGlowBottom.setSize(width, height);
                 if (mEdgeGlowBottom.draw(canvas)) {
                     invalidate();
                 }
